@@ -112,7 +112,7 @@ def app():
         type=float,
     )
 
-    # python main.py -f ./tests/test.jpg -s ./output -sw 500 -sh 500
+    # image-slicer -f ./tests/test.jpg -s ./output -sw 500 -sh 500
     args = vars(parser.parse_args())
 
     slice_image(
