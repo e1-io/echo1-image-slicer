@@ -1,11 +1,10 @@
-import argparse
-import os
+import argparse, os
 from loguru import logger
 from .helpers.sahi import get_slice_bboxes, read_image_as_pil
 
 
 def slice_image(
-    file_name="image.tif",
+    file_path="image.tif",
     save_to_file_prefix="",
     save_to_dir="./output",
     slice_width: int = 512,
@@ -14,10 +13,10 @@ def slice_image(
     overlap_height_ratio: int = 0.2,
 ):
 
-    logger.info("Loading the file {}".format(file_name))
+    logger.info("Loading the file {}".format(file_path))
 
     # Read the image from disk
-    image_pil = read_image_as_pil(file_name)
+    image_pil = read_image_as_pil(file_path)
 
     logger.debug("The image shape is {}".format(image_pil.size))
 
@@ -47,10 +46,10 @@ def slice_image(
         image_pil_slice = image_pil.crop(slice_bbox)
 
         # Generate an incrementing file name
-        save_file_name = save_to_file_prefix + format(part, "04") + ".jpg"
+        save_file_path = save_to_file_prefix + format(part, "04") + ".jpg"
 
         # Save the file to disk
-        image_pil_slice.save(os.path.join(save_to_dir, save_file_name))
+        image_pil_slice.save(os.path.join(save_to_dir, save_file_path))
 
         # Increment the file name
         part += 1
@@ -63,8 +62,8 @@ def app():
     parser = argparse.ArgumentParser(description="Slices an image into smaller images.")
     parser.add_argument(
         "-f",
-        "--file_name",
-        help="The file name to slice.",
+        "--file_path",
+        help="The path to a directory of images of path to a file.",
         required=True,
         type=str,
     )
@@ -115,12 +114,40 @@ def app():
     # image-slicer -f ./tests/test.jpg -s ./output -sw 500 -sh 500
     args = vars(parser.parse_args())
 
-    slice_image(
-        file_name=args["file_name"],
-        save_to_file_prefix=args["save_to_file_prefix"],
-        save_to_dir=args["save_to_dir"],
-        slice_width=args["slice_width"],
-        slice_height=args["slice_height"],
-        overlap_width_ratio=args["overlap_width_ratio"],
-        overlap_height_ratio=args["overlap_height_ratio"],
-    )
+    # If the file path is a file
+    if os.path.isfile(args["file_path"]):
+        file_path = args["file_path"]
+        file_prefix = os.path.splitext(os.path.basename(file_path))[0] + "-"
+        slice_image(
+            file_path=args["file_path"],
+            save_to_file_prefix=args["save_to_file_prefix"],
+            save_to_dir=args["save_to_dir"],
+            slice_width=args["slice_width"],
+            slice_height=args["slice_height"],
+            overlap_width_ratio=args["overlap_width_ratio"],
+            overlap_height_ratio=args["overlap_height_ratio"],
+        )
+
+        return
+
+    if os.path.isdir(args["file_path"]):
+
+        # Create an iterator to walk through the directory
+        for root, dirs, files in os.walk(args["file_path"], topdown=False):
+
+            # For each file in the acquisition directory
+            for file_name in files:
+
+                if file_name.endswith((".jpg", ".jpeg", ".png")):
+
+                    file_path = os.path.join(root, file_name)
+                    file_prefix = os.path.splitext(os.path.basename(file_path))[0] + "-"
+                    slice_image(
+                        file_path=file_path,
+                        save_to_file_prefix=file_prefix,
+                        save_to_dir=args["save_to_dir"],
+                        slice_width=args["slice_width"],
+                        slice_height=args["slice_height"],
+                        overlap_width_ratio=args["overlap_width_ratio"],
+                        overlap_height_ratio=args["overlap_height_ratio"],
+                    )
