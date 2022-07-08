@@ -68,14 +68,6 @@ def app():
         type=str,
     )
     parser.add_argument(
-        "-sp",
-        "--save_to_file_prefix",
-        help="The prefix for saved slice file names.",
-        default="",
-        required=False,
-        type=str,
-    )
-    parser.add_argument(
         "-s",
         "--save_to_dir",
         help="The directory to save the slices to.",
@@ -120,7 +112,7 @@ def app():
         file_prefix = os.path.splitext(os.path.basename(file_path))[0] + "-"
         slice_image(
             file_path=args["file_path"],
-            save_to_file_prefix=args["save_to_file_prefix"],
+            save_to_file_prefix=file_prefix,
             save_to_dir=args["save_to_dir"],
             slice_width=args["slice_width"],
             slice_height=args["slice_height"],
